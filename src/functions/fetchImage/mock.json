@@ -2,5 +2,5 @@
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{\"name\": \"Frederic\"}"
+  "body": "{\"url\": \"https:\/\/www.jotainmaukasta.fi\/wp-content\/uploads\/2021\/09\/Sikurirouskut-Mari-Moilanen_2.jpg\"}"
 }

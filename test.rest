@@ -1,0 +1,5 @@
+curl --location --request POST 'https://ge5mkccne1.execute-api.us-east-1.amazonaws.com/dev/hello' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "Frederic"
+}'

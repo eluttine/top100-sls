@@ -8,7 +8,7 @@ import { fromBuffer } from "file-type";
 
 import schema from "./schema";
 
-const BUCKET = process.env.BUCKET || "test-bucket";
+const BUCKET = "top100-lambda-images";
 const MAX_FILE_SIZE = 1024 * 1024 * 12; // 12MB
 const ALLOWED_TYPES = ["jpg", "png"];
 const UPLOAD_PATH = "original/";

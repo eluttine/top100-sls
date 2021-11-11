@@ -5,6 +5,7 @@ import fetch, { Response } from "node-fetch";
 import { S3 } from "aws-sdk";
 import { v4 as uuid } from "uuid";
 import { fromBuffer } from "file-type";
+// import sharp from "sharp";
 
 import schema from "./schema";
 
@@ -78,6 +79,11 @@ const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
   const key = `${UPLOAD_PATH}${uuid()}.${fileType.ext}`;
 
   const buffer = Buffer.from(arrayBuffer);
+
+  // const buffer = sharp(Buffer.from(arrayBuffer))
+  // .resize({ width: 400, height: 250 })
+  // .jpeg({ quality: 40 })
+  // .toBuffer();
 
   const result = await s3
     .putObject({

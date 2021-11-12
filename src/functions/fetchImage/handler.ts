@@ -1,17 +1,14 @@
 import type { ValidatedEventAPIGatewayProxyEvent } from "@libs/apiGateway";
 import { formatJSONResponse } from "@libs/apiGateway";
 import { middyfy } from "@libs/lambda";
-import fetch, { Response } from "node-fetch";
 import { S3 } from "aws-sdk";
 import { v4 as uuid } from "uuid";
-import { fromBuffer } from "file-type";
-// import sharp from "sharp";
+import Jimp from "jimp";
 
 import schema from "./schema";
 
 const BUCKET = "top100-lambda-images";
-const MAX_FILE_SIZE = 1024 * 1024 * 12; // 12MB
-const ALLOWED_TYPES = ["jpg", "png"];
+const MAX_FILE_SIZE = 1024 * 1024 * 5; // 5MB
 const UPLOAD_PATH = "original/";
 
 const s3 = new S3();
@@ -19,12 +16,15 @@ const s3 = new S3();
 const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
   event
 ) => {
-  let response: Response;
+  let buffer: Buffer;
 
   try {
-    response = await fetch(event.body.url);
+    buffer = await Jimp.read(event.body.url)
+      .then((image) => image.resize(400, Jimp.AUTO))
+      .then((image) => image.quality(40))
+      .then((image) => image.getBufferAsync(Jimp.MIME_JPEG));
   } catch (error) {
-    console.log("ERROR", error);
+    console.log("Image processing error:", error);
     return formatJSONResponse(
       {
         success: false,
@@ -33,57 +33,19 @@ const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
       500
     );
   }
-
-  if (!response.ok) {
-    console.log("fetch failed", response);
-    return formatJSONResponse(
-      {
-        success: false,
-        errorCode: "fetch_failed",
-      },
-      500
-    );
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
 
   // Check file size
-  if (arrayBuffer.byteLength > MAX_FILE_SIZE) {
+  if (buffer.byteLength > MAX_FILE_SIZE) {
     return formatJSONResponse(
       {
         success: false,
-        errorCode: "too_big",
+        errorCode: "file_too_big",
       },
       400
     );
   }
 
-  const fileType = await fromBuffer(arrayBuffer);
-
-  // Check file type
-  if (
-    !fileType ||
-    !fileType.mime.startsWith("image") ||
-    !ALLOWED_TYPES.includes(fileType.ext)
-  ) {
-    console.log(`File type error ${fileType.mime} ${fileType.ext}`);
-    return formatJSONResponse(
-      {
-        success: false,
-        errorCode: "invalid_file_type",
-      },
-      400
-    );
-  }
-
-  const key = `${UPLOAD_PATH}${uuid()}.${fileType.ext}`;
-
-  const buffer = Buffer.from(arrayBuffer);
-
-  // const buffer = sharp(Buffer.from(arrayBuffer))
-  // .resize({ width: 400, height: 250 })
-  // .jpeg({ quality: 40 })
-  // .toBuffer();
+  const key = `${UPLOAD_PATH}${uuid()}.jpg`;
 
   const result = await s3
     .putObject({
@@ -97,7 +59,7 @@ const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
     return formatJSONResponse(
       {
         success: false,
-        errorCode: "saving_failed",
+        errorCode: "image_saving_failed",
       },
       500
     );

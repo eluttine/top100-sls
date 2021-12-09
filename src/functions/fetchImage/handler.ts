@@ -9,17 +9,20 @@ import schema from "./schema";
 
 const BUCKET = "top100-lambda-images";
 const MAX_FILE_SIZE = 1024 * 1024 * 5; // 5MB
-const UPLOAD_PATH = "original/";
+const UPLOAD_PATH = "thumbs";
 
 const s3 = new S3();
 
 const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
   event
 ) => {
+  const url = event.body.url;
+  const feed = event.body.feed;
+
   let buffer: Buffer;
 
   try {
-    buffer = await Jimp.read(event.body.url)
+    buffer = await Jimp.read(url)
       .then((image) => image.resize(400, Jimp.AUTO))
       .then((image) => image.quality(40))
       .then((image) => image.getBufferAsync(Jimp.MIME_JPEG));
@@ -45,13 +48,14 @@ const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
     );
   }
 
-  const key = `${UPLOAD_PATH}${uuid()}.jpg`;
+  const key = `${UPLOAD_PATH}/${feed}/${uuid()}.jpg`;
 
   const result = await s3
     .putObject({
       Bucket: BUCKET,
       Key: key,
       Body: buffer,
+      ACL: "public-read",
     })
     .promise();
 
@@ -65,7 +69,7 @@ const fetchImage: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (
     );
   }
 
-  return formatJSONResponse({ success: true, key });
+  return formatJSONResponse({ success: true, path: key });
 };
 
 export const main = middyfy(fetchImage);

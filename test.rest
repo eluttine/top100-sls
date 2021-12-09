@@ -1,9 +1,11 @@
 ### Valid URL
 
+
 curl --location --request POST 'https://zt8mtegm9k.execute-api.eu-west-1.amazonaws.com/dev/fetchImage' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "url": "https://www.jotainmaukasta.fi/wp-content/uploads/2021/10/Englantilainen-joulukakku-Mari-Moilanen_2-Edit-2.jpg"
+    "url": "https://www.jotainmaukasta.fi/wp-content/uploads/2021/10/Englantilainen-joulukakku-Mari-Moilanen_2-Edit-2.jpg",
+    "feed": "test_feed"
 }'
 
 
